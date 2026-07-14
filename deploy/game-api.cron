@@ -1,0 +1,1 @@
+* * * * * www-data cd /var/www/game-api/current && /usr/bin/php artisan schedule:run --no-interaction >> /var/log/game-api-scheduler.log 2>&1

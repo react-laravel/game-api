@@ -1,0 +1,13 @@
+includes:
+    - ./vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - routes
+        - config
+        - database
+    level: 5
+    checkModelProperties: false
+    reportUnmatchedIgnoredErrors: false
+    treatPhpDocTypesAsCertain: false
