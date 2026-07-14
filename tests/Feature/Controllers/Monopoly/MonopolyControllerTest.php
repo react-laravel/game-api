@@ -124,16 +124,25 @@ class MonopolyControllerTest extends TestCase
     #[Test]
     public function roll_pays_start_bonus_when_passing_start(): void
     {
+        config([
+            'monopoly.board' => collect(range(0, 27))->map(fn (int $index) => [
+                'index' => $index,
+                'type' => 'start',
+                'name' => $index === 0 ? '起点' : "空地 {$index}",
+            ])->all(),
+        ]);
+
         $roomId = $this->postJson('/api/monopoly/rooms', ['name' => '起点测试'])->json('data.room.id');
         $this->postJson("/api/monopoly/rooms/{$roomId}/computers")->assertOk();
         $this->postJson("/api/monopoly/rooms/{$roomId}/start")->assertOk();
 
         $player = MonopolyPlayer::where('room_id', $roomId)->where('user_id', $this->host->id)->firstOrFail();
+        $initialCash = $player->cash;
         $player->update(['position' => 27]);
 
         $this->postJson("/api/monopoly/rooms/{$roomId}/roll")->assertOk();
 
-        $this->assertGreaterThanOrEqual(10_000_000, $player->fresh()->cash);
+        $this->assertSame($initialCash + (int) config('monopoly.start_bonus'), $player->fresh()->cash);
         $this->assertDatabaseHas('monopoly_events', [
             'room_id' => $roomId,
             'type' => 'start.bonus',
