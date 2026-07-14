@@ -41,8 +41,10 @@ reverb_id="$(cat "$SECRET_DIR/reverb-app-id")"
 reverb_key="$(cat "$SECRET_DIR/reverb-app-key")"
 reverb_secret="$(cat "$SECRET_DIR/reverb-app-secret")"
 
-install -d -o www-data -g www-data -m 775 "$API_ROOT/shared" "$API_ROOT/releases"
-install -d -o www-data -g www-data -m 775 "$FRONTEND_ROOT/shared" "$FRONTEND_ROOT/releases"
+install -d -o www-data -g www-data -m 775 \
+  "$API_ROOT" "$API_ROOT/shared" "$API_ROOT/releases"
+install -d -o www-data -g www-data -m 775 \
+  "$FRONTEND_ROOT" "$FRONTEND_ROOT/shared" "$FRONTEND_ROOT/releases"
 
 cat > "$API_ROOT/shared/.env" <<EOF
 APP_NAME="DogeOW Game API"
