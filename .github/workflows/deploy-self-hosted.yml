@@ -1,20 +1,69 @@
-name: Deploy Game API (Self-hosted)
+name: Deploy Game API to B
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      validate_only:
+        description: Build the locked runtime and verify B without changing its current release
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
 
 concurrency:
-  group: deploy-game-api-production
+  group: deploy-game-api-b
   cancel-in-progress: false
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v5
-      - name: Deploy production
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          clean: true
+
+      - name: Set up locked PHP build platform
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.5'
+          extensions: bcmath, curl, dom, fileinfo, gd, intl, mbstring, pdo_pgsql, redis, sockets, xml, zip
+          tools: composer:v2
+          coverage: none
         env:
-          APP_ROOT: /var/www/game-api
-        run: scripts/deploy-production.sh
+          fail-fast: true
+
+      - name: Check trusted runner runtime
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          php8.5 -r 'exit(PHP_MAJOR_VERSION === 8 && PHP_MINOR_VERSION === 5 ? 0 : 1);'
+          php -r 'exit(PHP_MAJOR_VERSION === 8 && PHP_MINOR_VERSION === 5 ? 0 : 1);'
+          command -v composer
+          command -v python3
+
+      - name: Install locked production dependencies
+        env:
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
+        run: |
+          composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts --optimize-autoloader
+          composer check-platform-reqs --no-dev
+
+      - name: Build credential-free runtime
+        run: |
+          python3 scripts/package-game-api.py "$RUNNER_TEMP/game-api-$GITHUB_SHA.tar.gz" "$GITHUB_SHA"
+
+      - name: Publish or verify B
+        env:
+          B_GAME_API_DEPLOY_SSH_KEY: ${{ secrets.B_GAME_API_DEPLOY_SSH_KEY }}
+          B_GAME_API_DEPLOY_KNOWN_HOSTS: ${{ secrets.B_GAME_API_DEPLOY_KNOWN_HOSTS }}
+          VALIDATE_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.validate_only == true }}
+        run: |
+          bash scripts/deploy-game-api-to-b.sh "$RUNNER_TEMP/game-api-$GITHUB_SHA.tar.gz" "$GITHUB_SHA"
+
+      - name: Remove transient runtime archive
+        if: always()
+        run: rm -f "$RUNNER_TEMP/game-api-$GITHUB_SHA.tar.gz"

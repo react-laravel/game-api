@@ -1,0 +1,6 @@
+env[LARAVEL_STORAGE_PATH] = /var/www/game-api/shared/storage
+env[APP_CONFIG_CACHE] = /var/lib/dogeow-tests-game-api/cache/config.php
+env[APP_ROUTES_CACHE] = /var/lib/dogeow-tests-game-api/cache/routes.php
+env[APP_EVENTS_CACHE] = /var/lib/dogeow-tests-game-api/cache/events.php
+env[APP_PACKAGES_CACHE] = /var/lib/dogeow-tests-game-api/cache/packages.php
+env[APP_SERVICES_CACHE] = /var/lib/dogeow-tests-game-api/cache/services.php

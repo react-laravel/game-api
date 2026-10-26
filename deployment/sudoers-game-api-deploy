@@ -1,0 +1,1 @@
+game-api-deploy ALL=(root) NOPASSWD: /usr/bin/systemctl restart dogeow-test-game-fpm.service, /usr/bin/systemctl restart dogeow-test-game-queue.service, /usr/bin/systemctl restart dogeow-test-game-reverb.service
